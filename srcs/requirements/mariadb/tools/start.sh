@@ -1,23 +1,13 @@
 #!/bin/sh
 
-mariadb --version
-
-echo "version $?"
-
 if [ ! -d "/run/mysqld" ]; then
 	mkdir -p /run/mysqld
 	chown -R mysql:mysql /run/mysqld
 fi
 
-mysql_install_db --user=mysql
-chown -R mysql:mysql /var/lib/mysql
-
-/etc/init.d/mysql start
 
 echo "=========================================  Check file in $MYSQL_DATABASE ========================================= "
 
-
-echo "========================================= Start Install SQL ... ========================================= ";
 
 if [ -d /var/lib/mysql/$MYSQL_DATABASE ]
 then
@@ -25,6 +15,11 @@ then
 echo "Database has already installed ...";
 
 else
+
+mysql_install_db --user=mysql
+chown -R mysql:mysql /var/lib/mysql
+
+/etc/init.d/mysql start
 
 mysql_secure_installation  << _EOF_
 
@@ -43,13 +38,13 @@ echo "ALTER USER 'root'@'localhost' IDENTIFIED BY '$MYSQL_ROOT_PASSWORD'; FLUSH 
 
 mysql -uroot -p$MYSQL_ROOT_PASSWORD $MYSQL_DATABASE < /usr/local/bin/wordpress.sql
 
-echo "Database installs Success !!!";
-fi
-
 echo "========================================= Start Stop mysql ========================================= ";
 sed -i "s|password =|password = $MYSQL_ROOT_PASSWORD|g" /etc/mysql/debian.cnf
 /etc/init.d/mysql stop
 echo "========================================= Finish Stop mysql ========================================= ";
+
+echo "Database installs Success !!!";
+fi
 
 echo "========================================= Start executer command ========================================= "
 exec "$@"
